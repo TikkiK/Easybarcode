@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Easybarcode</string>
+    <string name="barcode">Barcode</string>
 </resources>

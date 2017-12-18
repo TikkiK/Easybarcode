@@ -1,11 +1,14 @@
 package com.example.me_ti.easybarcode.fragment;
 
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +18,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.me_ti.easybarcode.R;
+import com.example.me_ti.easybarcode.utility.GetAllData;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Created by me_ti on 18-Dec-17.
@@ -33,7 +40,76 @@ public class MainFragment extends Fragment {
         forSpecial();
 //        Scan Controller
         scanController();
+        // ChechBarCode Controller
+        checkBarcode();
     }// Main Method
+
+    private void checkBarcode() {
+        Button button = getView().findViewById(R.id.btnCheck);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String barcodeString = (String) textView.getText();
+//                Check Have Barcode
+                if (barcodeString.equals(getString(R.string.barcode))) {
+//                    No Barcode
+                    Toast.makeText(getActivity(), "Please Add Barcode",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+//                    Have Barcode
+                      haveBarcode(barcodeString);
+                }
+            }
+        });
+    }
+
+    private void haveBarcode(String barcodeString) {
+        try {
+            String tag = "18DecV1";
+            String urlJSON = "http://androidthai.in.th/pi/getAllProductMaster.php";
+            boolean statusAboolean = true; // true ==> barcode false
+            String nameString = null;
+            String detailString = null;
+
+            GetAllData getAllData = new GetAllData(getActivity());
+            getAllData.execute(urlJSON);
+            String jsonstring = getAllData.get();
+            Log.d(tag, "JSON ==> " + jsonstring);
+
+            JSONArray jsonArray = new JSONArray(jsonstring);
+            for (int i = 0; i<jsonArray.length(); i+=1) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                if (barcodeString.equals(jsonObject.getString("Barcode"))) {
+                    nameString = jsonObject.getString("NamaProduce");
+                    detailString = jsonObject.getString("Detail");
+
+                    Log.d(tag, "Name ==> "+ nameString);
+                    Log.d(tag, "Detail ===>" + detailString);
+                    statusAboolean = false;
+                }
+            }// for
+            if (statusAboolean) {
+                myAlert("No This Barcode in my Database");
+
+            } else {
+
+                myAlert(nameString + "\n" + detailString);
+
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void myAlert(String messageString) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("My Alert");
+        builder.setMessage(messageString);
+        builder.show();
+
+    }
 
     @Override
     public void onActivityResult(int requestCode,
